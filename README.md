@@ -1,3 +1,15 @@
+> **ConduitIO fork of go-mysql (temporary).** This branch is `go-mysql-org/go-mysql` v1.14.0 plus one change:
+> `canal.RowsEvent` gets a `SkippedColumns [][]int` field, populated from `replication.RowsEvent.SkippedColumns`.
+> Without it a canal handler cannot tell a NULL from a column that a partial row image
+> (`binlog_row_image=MINIMAL` or `NOBLOB`) left out. `conduit-connector-mysql` uses it to halt instead of
+> emitting a wrong NULL.
+>
+> - Upstream issue: https://github.com/go-mysql-org/go-mysql/issues/1205
+> - Upstream PR: https://github.com/go-mysql-org/go-mysql/pull/1206
+> - Tag: `v1.14.0-conduit.1`. The Go module path is unchanged (`github.com/go-mysql-org/go-mysql`), so
+>   consumers use a `replace` directive.
+> - This fork and its tags are deleted once an upstream release contains the field. Do not build on it.
+
 <img src="go-mysql-logo.png" width="150px">
 
 # go-mysql
