@@ -8,7 +8,9 @@
 > - Upstream PR: https://github.com/go-mysql-org/go-mysql/pull/1206
 > - Tag: `v1.14.0-conduit.1`. The Go module path is unchanged (`github.com/go-mysql-org/go-mysql`), so
 >   consumers use a `replace` directive.
-> - This fork and its tags are deleted once an upstream release contains the field. Do not build on it.
+> - Once an upstream release contains the field, this fork is archived, not deleted, and the tag stays: released
+>   connector versions resolve `v1.14.0-conduit.1` through this repository, and deleting it would break their builds.
+>   `v1.14.0-conduit.1` is immutable and is never moved. Do not build new work on this fork.
 
 <img src="go-mysql-logo.png" width="150px">
 
