@@ -3,6 +3,7 @@ package canal
 import (
 	"testing"
 
+	"github.com/go-mysql-org/go-mysql/mysql"
 	"github.com/go-mysql-org/go-mysql/replication"
 	"github.com/go-mysql-org/go-mysql/schema"
 	"github.com/stretchr/testify/require"
@@ -97,4 +98,20 @@ func TestRowsEvent_skippedColumns(t *testing.T) {
 
 		require.Nil(t, canalEvent.SkippedColumns)
 	})
+}
+
+// TestRowsEvent_tableMap checks that the Table_map event the rows were decoded
+// with reaches canal's RowsEvent, so a handler can compare it with the table
+// canal cached.
+func TestRowsEvent_tableMap(t *testing.T) {
+	var table schema.Table
+	tableMap := &replication.TableMapEvent{
+		ColumnType: []byte{mysql.MYSQL_TYPE_LONG, mysql.MYSQL_TYPE_VARCHAR},
+		ColumnName: [][]byte{[]byte("id"), []byte("name")},
+	}
+
+	canalEvent := newRowsEvent(&table, InsertAction, [][]any{{1, "a"}}, nil, &replication.RowsEvent{Table: tableMap})
+	require.Same(t, tableMap, canalEvent.TableMap)
+
+	require.Nil(t, newRowsEvent(&table, InsertAction, [][]any{{1, "a"}}, nil, nil).TableMap)
 }

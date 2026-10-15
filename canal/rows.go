@@ -34,6 +34,13 @@ type RowsEvent struct {
 	SkippedColumns [][]int
 	// Header can be used to inspect the event
 	Header *replication.EventHeader
+	// TableMap is the Table_map event the rows were decoded with: the column
+	// types the server wrote them under, and, when binlog_row_metadata=FULL,
+	// the column names. Table holds the columns as the table has them when
+	// the event is handled, which can differ after a DDL that canal skipped
+	// or that ran after the event was written. Comparing the two is the only
+	// way to tell. It is nil for rows that come from the initial dump.
+	TableMap *replication.TableMapEvent
 }
 
 func newRowsEvent(table *schema.Table, action string, rows [][]any, header *replication.EventHeader, ev *replication.RowsEvent) *RowsEvent {
@@ -45,6 +52,7 @@ func newRowsEvent(table *schema.Table, action string, rows [][]any, header *repl
 	e.Header = header
 	if ev != nil {
 		e.SkippedColumns = ev.SkippedColumns
+		e.TableMap = ev.Table
 	}
 
 	e.handleUnsigned()
