@@ -229,6 +229,31 @@ func (p *BinlogParser) SetTableMapOptionalMetaDecodeFunc(tableMapOptionalMetaDec
 	p.tableMapOptionalMetaDecodeFunc = tableMapOptionalMetaDecondeFunc
 }
 
+// cloneForPayloadDecode returns a new BinlogParser that inherits the
+// caller's user-settable decode options (ParseTime, UseDecimal, etc.) but with
+// checksum verification disabled and a fresh tables map. It is used to parse
+// the events nested inside a TRANSACTION_PAYLOAD_EVENT, so that those rows
+// decode with the same options as uncompressed rows.
+//
+// Backported from upstream go-mysql 088eb1f (#1147), without the
+// RenderJSONAsMySQLText option that commit also adds.
+func (p *BinlogParser) cloneForPayloadDecode() *BinlogParser {
+	inner := NewBinlogParser()
+	inner.flavor = p.flavor
+	inner.rawMode = p.rawMode
+	inner.parseTime = p.parseTime
+	inner.timestampStringLocation = p.timestampStringLocation
+	inner.useDecimal = p.useDecimal
+	inner.useFloatWithTrailingZero = p.useFloatWithTrailingZero
+	inner.ignoreJSONDecodeErr = p.ignoreJSONDecodeErr
+	// verifyChecksum is intentionally left at the zero value: nested
+	// events do not carry their own checksum trailers.
+	inner.payloadDecoderConcurrency = p.payloadDecoderConcurrency
+	inner.rowsEventDecodeFunc = p.rowsEventDecodeFunc
+	inner.tableMapOptionalMetaDecodeFunc = p.tableMapOptionalMetaDecodeFunc
+	return inner
+}
+
 func (p *BinlogParser) parseHeader(data []byte) (*EventHeader, error) {
 	h := new(EventHeader)
 	err := h.Decode(data)
@@ -477,6 +502,7 @@ func (p *BinlogParser) newTransactionPayloadEvent() *TransactionPayloadEvent {
 	e := &TransactionPayloadEvent{}
 	e.format = *p.format
 	e.concurrency = p.payloadDecoderConcurrency
+	e.parent = p
 
 	return e
 }
